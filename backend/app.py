@@ -1,8 +1,9 @@
 import os
+import sys
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
-from models import setup_db, Bolgger, Blog ,Comment
+from models import setup_db, Bolgger, Blog ,Comment , db_drop_and_create_all ,Visitor 
 
 
 def create_app(test_config=None):
@@ -11,7 +12,14 @@ def create_app(test_config=None):
   setup_db(app)
   CORS(app)
 
- 
+  '''
+  @TODO uncomment the following line to initialize the datbase
+  !! NOTE THIS WILL DROP ALL RECORDS AND START YOUR DB FROM SCRATCH
+  !! NOTE THIS MUST BE UNCOMMENTED ON FIRST RUN
+  !! Running this funciton will add one
+  '''
+  #db_drop_and_create_all()
+
 
   @app.after_request
   def after_request(response):
@@ -21,40 +29,143 @@ def create_app(test_config=None):
 
   ##TODO: create apis endpoints
 
-  # GET 
+  ##########################
+          ## GET ##
+  ##########################
+  
 
+  # test 
+
+  @app.route('/',methods=['GET'])
+  def test_hello():
+    return jsonify({
+          'success': True,
+          "message": "Hello"
+     })
+  
+# retraive all bloggers 
   @app.route('/bloggers',methods=['GET'])
   def get_bloggers():
-    pass
 
+    bolggers = Bolgger.query.all()
+    formatted_bolggers =[bolgger.format() for bolgger in bolggers]
+    
+    return jsonify({
+          'success': True,
+          "bolggers": formatted_bolggers
+     })
+  
+
+ # retraive all bloges  
   @app.route('/blogs',methods=['GET'])
   def get_blogs():
-    pass
 
+    blogs = Blog.query.all()
+    formatted_blogs =[blog.format() for blog in blogs]
+    
+    return jsonify({
+          'success': True,
+          "blogs": formatted_blogs
+     })
+
+
+   
+ # retraive all bloges for one blogger 
   @app.route('/<blogger_id>/blogs',methods=['GET'])
-  def get_blogger_blog():
-    pass
+  def get_blogger_blog(blogger_id):
+      blogs = Blog.query.filter(Blog.Bolgger_id == blogger_id).all()
+      formatted_blogs =[blog.format() for blog in blogs]
+    
+      return jsonify({
+            'success': True,
+            "blogs": formatted_blogs
+      })
 
-  @app.route('/blog_id',methods=['GET'])
-  def get_blogs():
-    pass
 
+
+ # retraive spisefic blog content 
+  @app.route('/blogs/<blog_id>',methods=['GET'])
+  def get_one_blog(blog_id):
+      blog = Blog.query.filter(Blog.id == blog_id).all()
+      blog = blog[0].format()
+      return jsonify({
+            'success': True,
+            "content": blog['content'],
+            "id": blog['id'] ,
+            "title": blog['title']
+      })
+    
+ # retraive all comments for blog 
   @app.route('/<blog_id>/comments',methods=['GET'])
-  def get_comments():
-    pass
+  def get_comments(blog_id):
 
-  # POST 
+      comments = Comment.query.all()
+      formatted_comments =[comment.format() for comment in comments]
+    
+      return jsonify({
+            'success': True,
+            "comments": formatted_comments
+      })
 
-  @app.route('/<blogger_id>/blog',methods=['POST'])
-  def new_blog():
-    pass 
 
+ 
+
+
+  ##########################
+          ## POST ##
+  ##########################
+
+  @app.route('/<blogger_id>/blogs',methods=['POST'])
+  def new_blog(blogger_id):
+
+    body = request.get_json()
+    title = body.get('title',None)
+    Content = body.get('content',None)
+
+    try: 
+
+        blog = Blog(title = title, content = Content, Bolgger_id = blogger_id)
+        blog.insert()
+        formatted_blog = blog.format()
+
+        return jsonify({
+    
+           'success': True,
+            "blog": formatted_blog
+        })
+
+    except:
+        abort(422) 
+
+
+
+    
   @app.route('/<blog_id>/comments',methods=['POST'])
-  def new_comment():
-    pass 
+  def new_comment(blog_id):
+    
+    body = request.get_json()
+    #VisitorName = body.get('VisitorName',None)
+    comment = body.get('Comment',None)
 
+    try: 
+        new_comment = Comment(comment = comment, Blog_id = blog_id)
+        new_comment.insert()
+        formatted_comment = new_comment.format()
+        
+        return jsonify({
+           'success': True,
+            "blog": formatted_comment
+        })
+    except:
+        print(sys.exc_info())
+        abort(422) 
 
-  # Edit (PATCH)
+ 
+
+    '''
+  ##########################
+      ## Edit (PATCH) ##
+  ##########################
 
   @app.route('/<blogger_id>/<blog_id>',methods=['PATCH'])
   def edit_blog():
@@ -65,7 +176,10 @@ def create_app(test_config=None):
     pass 
 
 
- # DELETE 
+ 
+  ##########################
+    ## DELETE ##
+  ##########################
 
   @app.route('/<blogger_id>/<blog_id>',methods=['DELETE'])
   def delete_blog():
@@ -76,8 +190,39 @@ def create_app(test_config=None):
     pass 
 
 
+   '''
 
+  @app.errorhandler(404)
+  def not_found(error):
+    return jsonify({
+        "success": False, 
+        "error": 404,
+        "message": "resource not found"
+        }), 404
+    
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return jsonify({
+      "success": False, 
+      "error": 422,
+      "message": "unprocessable"
+      }), 422
 
+  @app.errorhandler(400)
+  def bad_request(error):
+    return jsonify({
+      "success": False, 
+      "error": 400,
+      "message": "bad request"
+      }), 400
+      
+  @app.errorhandler(405)
+  def method_not_allowed(error):
+    return jsonify({
+      "success": False, 
+      "error": 405,
+      "message": "method not allowed"
+      }), 405
   return app
 
 APP = create_app()
