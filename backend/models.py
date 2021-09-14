@@ -27,8 +27,13 @@ def db_drop_and_create_all():
         content = " Hello this is first blog ",
         Bolgger_id = 1
     )
+    visitor = Visitor(
+       VisitorName = 'John'
+   )
+
     blogger.insert()
     blog.insert()
+    visitor.insert()
 
 def setup_db(app, database_path=DB_PATH):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
@@ -129,6 +134,17 @@ class Visitor(db.Model):
     id = db.Column(Integer, primary_key=True)
     VisitorName = Column(String(80), nullable=False)
     Comment = db.relationship("Comment", backref="Visitor")
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def update(self):
+        db.session.commit()
 
 class Comment(db.Model):
 

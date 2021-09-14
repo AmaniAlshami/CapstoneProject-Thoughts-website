@@ -99,7 +99,7 @@ def create_app(test_config=None):
   @app.route('/<blog_id>/comments',methods=['GET'])
   def get_comments(blog_id):
 
-      comments = Comment.query.all()
+      comments = Comment.query.filter(Comment.Blog_id == blog_id).all()
       formatted_comments =[comment.format() for comment in comments]
     
       return jsonify({
@@ -144,53 +144,126 @@ def create_app(test_config=None):
   def new_comment(blog_id):
     
     body = request.get_json()
-    #VisitorName = body.get('VisitorName',None)
+    VisitorName = body.get('VisitorName',None)
     comment = body.get('Comment',None)
 
+    ## Get visitor id based on his/her name 
+    Visitorid = Visitor.query.with_entities(Visitor.id).filter(Visitor.VisitorName == VisitorName).all()
+   
     try: 
-        new_comment = Comment(comment = comment, Blog_id = blog_id)
+        new_comment = Comment(comment = comment, Blog_id = blog_id , Visitor_id =Visitorid[0][0] )
         new_comment.insert()
         formatted_comment = new_comment.format()
         
         return jsonify({
            'success': True,
-            "blog": formatted_comment
+            "new_comment": formatted_comment
         })
     except:
-        print(sys.exc_info())
         abort(422) 
 
  
 
-    '''
+    
   ##########################
       ## Edit (PATCH) ##
   ##########################
 
-  @app.route('/<blogger_id>/<blog_id>',methods=['PATCH'])
-  def edit_blog():
-    pass 
+  @app.route('/<int:blogger_id>/blogs/<blog_id>',methods=['PATCH'])
+  def edit_blog(blogger_id,blog_id):
+     
+    # CHECK if the same blogger 
+    current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
+  
+    if blogger_id != current_bolgger_id[0][0] :
+      abort(405)
+    
+    body = request.get_json()
+    title = body.get('title',None)
+    Content = body.get('content',None)
 
-  @app.route('/<blog_id>/<comment_id>',methods=['PATCH'])
-  def edit_comment():
-    pass 
+    try: 
+
+        blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+        if blog is None:
+            abort(404)
+        if title:
+          blog.title = title
+        if Content:
+          blog.content = Content
+ 
+        blog.update()
+
+        formatted_blog = blog.format()
+
+        return jsonify({
+           'success': True,
+            "blog": formatted_blog
+        })
+
+    except:
+        abort(422) 
+
+  #@app.route('/blogs/<blog_id>/<comment_id>',methods=['PATCH'])
+  #def edit_comment():
+    #pass 
 
 
  
   ##########################
-    ## DELETE ##
+       ## DELETE ##
   ##########################
 
-  @app.route('/<blogger_id>/<blog_id>',methods=['DELETE'])
-  def delete_blog():
-    pass 
+  @app.route('/<int:blogger_id>/blogs/<blog_id>',methods=['DELETE'])
+  def delete_blog_and_its_comments(blogger_id,blog_id):
+
+    # CHECK if the same blogger 
+    current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
+    print("******")
+    print(current_bolgger_id)
+    print(blogger_id)
+    print(blog_id)
+    print("******")
+    if blogger_id != current_bolgger_id[0][0] :
+      abort(405)
+
+    try:  
+      blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+      if blog is None:
+          abort(404)
+      blog.delete()
+
+      formatted_blog = blog.format()
+
+      ## delete all comments for this blog 
+      commments = Comment.query.filter(Comment.Blog_id == blog_id).all()
+      while commments:
+        commments.delete()
+
+
+
+      return jsonify({
+          'success': True,
+          "deleteBlog": formatted_blog
+      })
+
+    except:
+        abort(422) 
+
+
 
   @app.route('/<blog_id>/<comment_id>',methods=['DELETE'])
   def delete_comment():
     pass 
 
 
-   '''
+
+
+
+
+ ##########################
+    ## Errorhandler ##
+ ##########################
 
   @app.errorhandler(404)
   def not_found(error):
