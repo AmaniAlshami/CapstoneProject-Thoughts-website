@@ -4,6 +4,7 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from models import setup_db, Bolgger, Blog ,Comment , db_drop_and_create_all ,Visitor 
+from auth import AuthError, requires_auth
 
 
 def create_app(test_config=None):
@@ -116,7 +117,8 @@ def create_app(test_config=None):
   ##########################
 
   @app.route('/<blogger_id>/blogs',methods=['POST'])
-  def new_blog(blogger_id):
+  @requires_auth('post:blog')
+  def new_blog(jwt,blogger_id):
 
     body = request.get_json()
     title = body.get('title',None)
@@ -141,7 +143,8 @@ def create_app(test_config=None):
 
     
   @app.route('/<blog_id>/comments',methods=['POST'])
-  def new_comment(blog_id):
+  @requires_auth('post:comment')
+  def new_comment(jwt,blog_id):
     
     body = request.get_json()
     VisitorName = body.get('VisitorName',None)
@@ -170,7 +173,8 @@ def create_app(test_config=None):
   ##########################
 
   @app.route('/<int:blogger_id>/blogs/<blog_id>',methods=['PATCH'])
-  def edit_blog(blogger_id,blog_id):
+  @requires_auth('patch:blog')
+  def edit_blog(jwt,blogger_id,blog_id):
      
     # CHECK if the same blogger 
     current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
@@ -215,7 +219,8 @@ def create_app(test_config=None):
   ##########################
 
   @app.route('/<int:blogger_id>/blogs/<blog_id>',methods=['DELETE'])
-  def delete_blog_and_its_comments(blogger_id,blog_id):
+  @requires_auth('delete:blog')
+  def delete_blog_and_its_comments(jwt,blogger_id,blog_id):
 
     # CHECK if the same blogger 
     current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
@@ -296,6 +301,14 @@ def create_app(test_config=None):
       "error": 405,
       "message": "method not allowed"
       }), 405
+  
+  @app.errorhandler(AuthError)
+  def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
   return app
 
 APP = create_app()
