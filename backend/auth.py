@@ -4,7 +4,7 @@ from functools import wraps
 from jose import jwt
 from urllib.request import urlopen
 
-#@TODO: change this 
+
 AUTH0_DOMAIN = 'dev-gctheugr.us.auth0.com'
 ALGORITHMS = ['RS256']
 API_AUDIENCE ='ThoughtsApp'
@@ -95,10 +95,11 @@ def check_permissions(permission, payload):
 def verify_decode_jwt(token):
     ### Code resours : Udacity - FSND - Lesson 2 : Identity and Authentication .
 
+   
     #  public key 
     jsonurl = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
     jwks = json.loads(jsonurl.read())
-
+     
     unverified_header = jwt.get_unverified_header(token)
       # CHOOSE OUR KEY
     rsa_key = {}

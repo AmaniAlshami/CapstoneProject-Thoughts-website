@@ -74,6 +74,11 @@ def create_app(test_config=None):
  # retraive all bloges for one blogger 
   @app.route('/<blogger_id>/blogs',methods=['GET'])
   def get_blogger_blog(blogger_id):
+
+      blogger = Bolgger.query.filter(Bolgger.id == blogger_id).one_or_none()
+      if blogger is None:
+        abort(404)
+
       blogs = Blog.query.filter(Blog.Bolgger_id == blogger_id).all()
       formatted_blogs =[blog.format() for blog in blogs]
     
@@ -84,18 +89,27 @@ def create_app(test_config=None):
 
 
 
- # retraive spisefic blog content 
+ # retraive one blog content 
   @app.route('/blogs/<blog_id>',methods=['GET'])
   def get_one_blog(blog_id):
-      blog = Blog.query.filter(Blog.id == blog_id).all()
-      blog = blog[0].format()
+      blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+      if blog is None:
+        abort(404)
+      
+      blog = blog.format()
+
+      comments = Comment.query.filter(Comment.Blog_id == blog_id).all()
+      formatted_comments =[comment.format() for comment in comments]
+
       return jsonify({
             'success': True,
             "content": blog['content'],
             "id": blog['id'] ,
-            "title": blog['title']
+            "title": blog['title'],
+            "comments" : formatted_comments
+
       })
-    
+  '''  
  # retraive all comments for blog 
   @app.route('/<blog_id>/comments',methods=['GET'])
   def get_comments(blog_id):
@@ -108,7 +122,7 @@ def create_app(test_config=None):
             "comments": formatted_comments
       })
 
-
+  ''' 
  
 
 
@@ -142,19 +156,22 @@ def create_app(test_config=None):
 
 
     
-  @app.route('/<blog_id>/comments',methods=['POST'])
+  @app.route('/blogs/<blog_id>',methods=['POST'])
   @requires_auth('post:comment')
   def new_comment(jwt,blog_id):
+    
     
     body = request.get_json()
     VisitorName = body.get('VisitorName',None)
     comment = body.get('Comment',None)
 
     ## Get visitor id based on his/her name 
-    Visitorid = Visitor.query.with_entities(Visitor.id).filter(Visitor.VisitorName == VisitorName).all()
-   
+    Visitorid = Visitor.query.with_entities(Visitor.id).filter(Visitor.VisitorName == VisitorName).one_or_none()
+    if Visitorid is None:
+      Visitorid = Bolgger.query.with_entities(Bolgger.id).filter(Bolgger.BloggerName == VisitorName).one_or_none()
+
     try: 
-        new_comment = Comment(comment = comment, Blog_id = blog_id , Visitor_id =Visitorid[0][0] )
+        new_comment = Comment(comment = comment, Blog_id = blog_id , Visitor_id =Visitorid[0] )
         new_comment.insert()
         formatted_comment = new_comment.format()
         
@@ -208,9 +225,7 @@ def create_app(test_config=None):
     except:
         abort(422) 
 
-  #@app.route('/blogs/<blog_id>/<comment_id>',methods=['PATCH'])
-  #def edit_comment():
-    #pass 
+  
 
 
  
@@ -222,20 +237,19 @@ def create_app(test_config=None):
   @requires_auth('delete:blog')
   def delete_blog_and_its_comments(jwt,blogger_id,blog_id):
 
+    blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+    if blog is None:
+          abort(404)
     # CHECK if the same blogger 
     current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
-    print("******")
-    print(current_bolgger_id)
-    print(blogger_id)
-    print(blog_id)
-    print("******")
+
     if blogger_id != current_bolgger_id[0][0] :
       abort(405)
 
     try:  
-      blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
-      if blog is None:
-          abort(404)
+      #blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+      #if blog is None:
+      #    abort(404)
       blog.delete()
 
       formatted_blog = blog.format()
@@ -249,7 +263,7 @@ def create_app(test_config=None):
 
       return jsonify({
           'success': True,
-          "deleteBlog": formatted_blog
+          "deletedBlog": formatted_blog
       })
 
     except:
@@ -257,9 +271,7 @@ def create_app(test_config=None):
 
 
 
-  @app.route('/<blog_id>/<comment_id>',methods=['DELETE'])
-  def delete_comment():
-    pass 
+
 
 
 
