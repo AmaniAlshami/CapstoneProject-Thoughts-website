@@ -233,13 +233,14 @@ def create_app(test_config=None):
        ## DELETE ##
   ##########################
 
-  @app.route('/<int:blogger_id>/blogs/<blog_id>',methods=['DELETE'])
+  @app.route('/<int:blogger_id>/blogs/<int:blog_id>',methods=['DELETE'])
   @requires_auth('delete:blog')
   def delete_blog_and_its_comments(jwt,blogger_id,blog_id):
 
     blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
     if blog is None:
           abort(404)
+    
     # CHECK if the same blogger 
     current_bolgger_id = Blog.query.with_entities(Blog.Bolgger_id).filter(Blog.id == blog_id).all()
 
@@ -247,12 +248,10 @@ def create_app(test_config=None):
       abort(405)
 
     try:  
-      #blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
-      #if blog is None:
-      #    abort(404)
+      blog = Blog.query.filter(Blog.id == blog_id).one_or_none()
+      if blog is None:
+          abort(404)
       blog.delete()
-
-      formatted_blog = blog.format()
 
       ## delete all comments for this blog 
       commments = Comment.query.filter(Comment.Blog_id == blog_id).all()
@@ -262,8 +261,7 @@ def create_app(test_config=None):
 
 
       return jsonify({
-          'success': True,
-          "deletedBlog": formatted_blog
+          'success': True
       })
 
     except:
