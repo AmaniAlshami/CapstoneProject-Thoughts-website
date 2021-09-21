@@ -5,3 +5,5 @@ Flask_Migrate==3.0.1
 Flask==1.1.2
 jose==1.0.0
 Flask_Cors==3.0.10
+python-jose==3.3.0
+psycopg2-binary==2.8.6

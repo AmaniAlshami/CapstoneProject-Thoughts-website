@@ -165,6 +165,7 @@ Sample: curl http://127.0.0.1:5000/blogs/2
 
 ## Deployment 
 
+Heroku Link : https://thoughtswebsite.herokuapp.com/
 
 ## Authors
 AMANI ALSHAMI 

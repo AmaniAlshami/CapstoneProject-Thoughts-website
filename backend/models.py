@@ -12,6 +12,8 @@ DB_PASSWORD = os.getenv('DB_PASSWORD', '')
 DB_NAME = os.getenv('DB_NAME', 'thoughts')  
 DB_PATH = 'postgres://{}:{}@{}/{}'.format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
 
+# to setup heroko DB 
+# DATABASE_URL = os.environ['DATABASE_URL'] insted of DB_PATH
 
 db = SQLAlchemy()
 

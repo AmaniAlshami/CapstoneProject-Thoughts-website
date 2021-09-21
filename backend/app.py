@@ -28,21 +28,20 @@ def create_app(test_config=None):
       response.headers.add('Access-Control-Allow-Headers', 'GET, POST, PATCH, DELETE, OPTION')
       return response
 
-  ##TODO: create apis endpoints
+
 
   ##########################
           ## GET ##
   ##########################
   
 
-  # test 
+  # For Heroku  
 
-  @app.route('/',methods=['GET'])
+  @app.route('/')
   def test_hello():
-    return jsonify({
-          'success': True,
-          "message": "Hello"
-     })
+    excited = os.environ['EXCITED']
+    if excited == 'true':
+      return jsonify("Hello World")
   
 # retraive all bloggers 
   @app.route('/bloggers',methods=['GET'])
@@ -109,22 +108,8 @@ def create_app(test_config=None):
             "comments" : formatted_comments
 
       })
-  '''  
- # retraive all comments for blog 
-  @app.route('/<blog_id>/comments',methods=['GET'])
-  def get_comments(blog_id):
 
-      comments = Comment.query.filter(Comment.Blog_id == blog_id).all()
-      formatted_comments =[comment.format() for comment in comments]
-    
-      return jsonify({
-            'success': True,
-            "comments": formatted_comments
-      })
-
-  ''' 
  
-
 
   ##########################
           ## POST ##
