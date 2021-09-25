@@ -160,8 +160,13 @@ Sample: curl http://127.0.0.1:5000/blogs/2
   
 
 ## Testing
+To run testing file
 
-
+```
+dropdb & createdb Thoughts_test
+cd /backend
+python3 test_app.py
+```
 
 ## Deployment 
 
