@@ -48,9 +48,7 @@ def create_app(test_config=None):
     # For Heroku
     @app.route('/')
     def test_hello():
-        excited = os.environ['EXCITED']
-        if excited == 'true':
-            return jsonify("Hello World")
+        return jsonify({"welcom": "Hello World"})
 
     # retraive all bloggers
     @app.route('/bloggers', methods=['GET'])
