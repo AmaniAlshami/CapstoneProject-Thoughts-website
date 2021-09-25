@@ -170,7 +170,7 @@ python3 test_app.py
 
 ## Deployment 
 
-Heroku Link : https://thoughtswebsite.herokuapp.com/
+Heroku Link : https://thoughts-website.herokuapp.com/
 
 ## Authors
 AMANI ALSHAMI 
