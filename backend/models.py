@@ -1,41 +1,42 @@
 import os
-from sqlalchemy import Column, String, Integer , ForeignKey
+from sqlalchemy import Column, String, Integer, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 
+DB_HOST = os.getenv('DB_HOST', 'localhost:5432')
+DB_USER = os.getenv('DB_USER', '')
+DB_PASSWORD = os.getenv('DB_PASSWORD', '')
+DB_NAME = os.getenv('DB_NAME', 'thoughts')
+DB_PATH = 'postgres://{}:{}@{}/{}'.format(DB_USER,
+                                          DB_PASSWORD, DB_HOST, DB_NAME)
 
-
-DB_HOST = os.getenv('DB_HOST','localhost:5432')  
-DB_USER = os.getenv('DB_USER', '')  
-DB_PASSWORD = os.getenv('DB_PASSWORD', '')  
-DB_NAME = os.getenv('DB_NAME', 'thoughts')  
-DB_PATH = 'postgres://{}:{}@{}/{}'.format(DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
-
-# to setup heroko DB 
+# to setup heroko DB
 # DATABASE_URL = os.environ['DATABASE_URL'] insted of DB_PATH
 
 db = SQLAlchemy()
+
 
 def db_drop_and_create_all():
     db.drop_all()
     db.create_all()
 
     blogger = Bolgger(
-       BloggerName = "Amani"
+        BloggerName="Amani"
     )
     blog = Blog(
-        title = "First",
-        content = " Hello this is first blog ",
-        Bolgger_id = 1
+        title="First",
+        content=" Hello this is first blog ",
+        Bolgger_id=1
     )
     visitor = Visitor(
-       VisitorName = 'John'
-   )
+        VisitorName='John'
+    )
 
     blogger.insert()
     blog.insert()
     visitor.insert()
+
 
 def setup_db(app, database_path=DB_PATH):
     app.config["SQLALCHEMY_DATABASE_URI"] = database_path
@@ -46,14 +47,12 @@ def setup_db(app, database_path=DB_PATH):
     migrate = Migrate(app, db)
 
 
-
 class Bolgger(db.Model):
     __tablename__ = "Bolgger"
 
     id = db.Column(Integer, primary_key=True)
     BloggerName = Column(String(80), nullable=False)
     Blog = db.relationship("Blog", backref="Bolgger")
-
 
     def format(self):
         return {
@@ -94,10 +93,10 @@ class Bolgger(db.Model):
             blogger.title = 'Black Coffee'
             blogger.update()
     '''
+
     def update(self):
         db.session.commit()
 
-    
 
 class Blog(db.Model):
     __tablename__ = "Blog"
@@ -108,13 +107,12 @@ class Blog(db.Model):
     Bolgger_id = Column(Integer, ForeignKey('Bolgger.id'))
     Comment = db.relationship("Comment", backref="Blog")
 
-    
     def format(self):
         return {
             'id': self.id,
             'title': self.title,
             'content': self.content,
-            'Bolgger_id':self.Bolgger_id
+            'Bolgger_id': self.Bolgger_id
         }
 
     def insert(self):
@@ -128,7 +126,6 @@ class Blog(db.Model):
     def update(self):
         db.session.commit()
 
-    
 
 class Visitor(db.Model):
     __tablename__ = "Visitor"
@@ -147,6 +144,7 @@ class Visitor(db.Model):
 
     def update(self):
         db.session.commit()
+
 
 class Comment(db.Model):
 
@@ -173,6 +171,5 @@ class Comment(db.Model):
             'id': self.id,
             'comment': self.comment,
             'Visitor_id': self.Visitor_id,
-            'Blog_id':self.Blog_id
+            'Blog_id': self.Blog_id
         }
-
